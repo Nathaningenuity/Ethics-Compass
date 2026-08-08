@@ -6,6 +6,7 @@
 <title>The Ethics Compass</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --bg: #1B1F27;
@@ -1186,6 +1187,12 @@ const ITEMS_SIMPLE = [
 let ITEMS = ITEMS_FULL;
 
 let current = 0;
+const supabaseClient = supabase.createClient(
+  'https://kgcaqimgacfixtamvqnc.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnY2FxaW1nYWNmaXh0YW12cW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMjIyMzMsImV4cCI6MjEwMDY5ODIzM30.zZgYx_UcdgGdHWy3rVNNzfLKBQ_r6OQ5tUWS0SvRSrE'
+);
+
+let quizMode = 'full';
 let responses = new Array(ITEMS.length).fill(null);
 let autoNext = true;
 let isLight = true;
@@ -1330,6 +1337,7 @@ function renderCarousel(){
 }
 
 function startQuiz(mode){
+  quizMode = (mode === 'simple') ? 'simple' : 'full';
   ITEMS = (mode === 'simple') ? ITEMS_SIMPLE : ITEMS_FULL;
   FRAMEWORKS = (mode === 'simple') ? FRAMEWORKS_SIMPLE : FRAMEWORKS_FULL;
   current = 0;
@@ -1965,6 +1973,28 @@ function showResults(){
 
   const scores = computeScores();
   const labels = computeLabels(scores);
+
+  const answerDetail = ITEMS.map((item, i) => ({
+    index: i + 1,
+    axis: item.axis,
+    question: item.text,
+    answer: labelFor(item, responses[i])
+  }));
+
+  const ranking = FRAMEWORKS
+    .filter(f => scores[f].pct !== null)
+    .sort((a, b) => scores[b].pct - scores[a].pct)
+    .map(f => ({ framework: f, pct: scores[f].pct }));
+
+  supabaseClient.from('quiz_responses').insert({
+    quiz_version: quizMode,
+    item_count: ITEMS.length,
+    answers: answerDetail,
+    scores: scores,
+    ranking: ranking
+  }).then(({ error }) => {
+    if (error) console.error('Save failed:', error);
+  });
 
   const eligibleReveal = ELIGIBLE_FOR_REVEAL.filter(f => scores[f].pct !== null);
   if(eligibleReveal.length > 0){
