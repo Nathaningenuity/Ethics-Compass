@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ethics Compass — Results Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#1B1F27; --panel:#232833; --panel-raised:#2A303C; --rule:#383F4C;
+    --text:#E9E6DC; --text-dim:#9AA1AC; --brass:#C9A24B;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--text); font-family:'IBM Plex Sans', sans-serif;
+    min-height:100vh; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:920px; margin:0 auto; padding:48px 24px 80px; }
+  h1{ font-family:'Fraunces', serif; font-weight:600; font-size:28px; margin:0 0 6px; }
+  .sub{ color:var(--text-dim); font-size:14px; margin:0 0 28px; }
+  .tabs{ display:flex; gap:8px; margin-bottom:24px; }
+  .tab{
+    font-family:'IBM Plex Sans', sans-serif; font-size:13px; padding:8px 16px; border-radius:8px;
+    border:1px solid var(--rule); background:var(--panel); color:var(--text-dim); cursor:pointer;
+  }
+  .tab.active{ background:var(--brass); color:#201B10; border-color:var(--brass); font-weight:500; }
+  .legend{ display:flex; gap:18px; margin-bottom:20px; font-size:12.5px; color:var(--text-dim); flex-wrap:wrap; }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .swatch{ width:10px; height:10px; border-radius:2px; display:inline-block; }
+  .row{
+    background:var(--panel); border:1px solid var(--rule); border-radius:10px;
+    padding:16px 18px; margin-bottom:12px;
+  }
+  .row-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
+  .fw-name{ font-family:'Fraunces', serif; font-size:15.5px; }
+  .fw-n{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--text-dim); }
+  .bars{ display:flex; flex-direction:column; gap:6px; }
+  .bar-line{ display:flex; align-items:center; gap:10px; }
+  .bar-label{ width:98px; flex-shrink:0; font-size:11px; color:var(--text-dim); font-family:'IBM Plex Mono', monospace; }
+  .bar-track{ flex:1; background:var(--panel-raised); border-radius:5px; height:14px; overflow:hidden; }
+  .bar-fill{ height:100%; border-radius:5px; transition:width .5s ease; }
+  .bar-pct{ width:44px; flex-shrink:0; font-size:11.5px; font-family:'IBM Plex Mono', monospace; text-align:right; }
+  .status{ color:var(--text-dim); font-size:13.5px; padding:40px 0; text-align:center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ethics Compass — Results Dashboard</h1>
+  <p class="sub">Aggregate stats across all submitted quiz responses.</p>
+
+  <div class="tabs">
+    <div class="tab active" data-version="all">All versions</div>
+    <div class="tab" data-version="full">Full (40 items)</div>
+    <div class="tab" data-version="simple">Simple (22 items)</div>
+  </div>
+
+  <div class="legend">
+    <span><span class="swatch" style="background:#C9A24B"></span>Average %</span>
+    <span><span class="swatch" style="background:#4C9A6A"></span>Ranked #1 (main 6 only)</span>
+    <span><span class="swatch" style="background:#3E7C8A"></span>≥ 67%</span>
+    <span><span class="swatch" style="background:#6B7280"></span>≥ 60%</span>
+  </div>
+
+  <div id="content"><div class="status">Loading…</div></div>
+</div>
+
+<script>
+const supabaseClient = supabase.createClient(
+  'https://kgcaqimgacfixtamvqnc.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnY2FxaW1nYWNmaXh0YW12cW5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxMjIyMzMsImV4cCI6MjEwMDY5ODIzM30.zZgYx_UcdgGdHWy3rVNNzfLKBQ_r6OQ5tUWS0SvRSrE'
+);
+
+const FW_META = {
+  UTIL:   {name:'Utilitarianism',            color:'#D9A83E'},
+  RULE:   {name:'Rule Utilitarianism',       color:'#3E7C8A'},
+  DEON:   {name:'Kantian Deontology',        color:'#2C4870'},
+  VIRT:   {name:'Virtue Ethics',             color:'#7C8C4A'},
+  CONT:   {name:'Rawlsian Contractualism',   color:'#6B4E8E'},
+  EGO:    {name:'Ethical Egoism',            color:'#C1502E'},
+  CARE:   {name:'Care Ethics',               color:'#B5677A'},
+  LIBERT: {name:'Libertarian Rights Theory', color:'#8C2A3A'},
+  DESERT: {name:'Desert Theory',             color:'#83888F'},
+};
+const FW_ORDER = ['UTIL','RULE','DEON','VIRT','CONT','EGO','CARE','LIBERT','DESERT'];
+
+let allRows = [];
+let currentTab = 'all';
+
+async function load(){
+  const { data, error } = await supabaseClient.rpc('get_framework_stats');
+  if(error){
+    document.getElementById('content').innerHTML =
+      '<div class="status">Could not load stats: ' + error.message + '</div>';
+    return;
+  }
+  allRows = data || [];
+  render();
+}
+
+function render(){
+  const container = document.getElementById('content');
+  let rows = allRows;
+  if(currentTab !== 'all'){
+    rows = rows.filter(r => r.quiz_version === currentTab);
+  }
+
+  if(currentTab === 'all'){
+    // Merge full + simple into a weighted combined view per framework.
+    const merged = {};
+    rows.forEach(r => {
+      if(!merged[r.framework]) merged[r.framework] = {avg:0, first:0, ge67:0, ge60:0, n:0};
+      const m = merged[r.framework];
+      const w = r.n;
+      m.avg  += r.avg_pct * w;
+      m.first += r.pct_first * w;
+      m.ge67 += r.pct_ge_67 * w;
+      m.ge60 += r.pct_ge_60 * w;
+      m.n += w;
+    });
+    rows = Object.keys(merged).map(f => ({
+      framework: f,
+      avg_pct: merged[f].n ? merged[f].avg / merged[f].n : 0,
+      pct_first: merged[f].n ? merged[f].first / merged[f].n : 0,
+      pct_ge_67: merged[f].n ? merged[f].ge67 / merged[f].n : 0,
+      pct_ge_60: merged[f].n ? merged[f].ge60 / merged[f].n : 0,
+      n: merged[f].n
+    }));
+  }
+
+  if(rows.length === 0){
+    container.innerHTML = '<div class="status">No responses yet for this version.</div>';
+    return;
+  }
+
+  const byFw = {};
+  rows.forEach(r => { byFw[r.framework] = r; });
+
+  container.innerHTML = FW_ORDER.filter(f => byFw[f]).map(f => {
+    const r = byFw[f];
+    const meta = FW_META[f];
+    const bar = (label, val, color) => `
+      <div class="bar-line">
+        <div class="bar-label">${label}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.max(val,0)}%; background:${color}"></div></div>
+        <div class="bar-pct">${val.toFixed(1)}%</div>
+      </div>`;
+    return `
+      <div class="row">
+        <div class="row-head">
+          <div class="fw-name" style="color:${meta.color}">${meta.name}</div>
+          <div class="fw-n">n = ${Math.round(r.n)}</div>
+        </div>
+        <div class="bars">
+          ${bar('Average', r.avg_pct, '#C9A24B')}
+          ${bar('Ranked #1', r.pct_first, '#4C9A6A')}
+          ${bar('≥ 67%', r.pct_ge_67, '#3E7C8A')}
+          ${bar('≥ 60%', r.pct_ge_60, '#6B7280')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentTab = tab.dataset.version;
+    render();
+  });
+});
+
+load();
+</script>
+</body>
+</html>
