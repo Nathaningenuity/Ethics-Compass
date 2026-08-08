@@ -1990,6 +1990,7 @@ function showResults(){
     quiz_version: quizMode,
     item_count: ITEMS.length,
     answers: answerDetail,
+    labels: labels,
     scores: scores,
     ranking: ranking
   }).then(({ error }) => {
@@ -2142,32 +2143,8 @@ document.getElementById('theme-btn').innerHTML = MOON_ICON;
 buildIconRing();
 
 // Keyboard controls: 1-7 for the dial, arrows for back/next, A/B/C for choice items.
-function fillRandomAnswers(){
-  ITEMS.forEach((item, i) => {
-    if(item.type === 'spectrum'){
-      responses[i] = Math.floor(Math.random() * 7) - 3; // random int -3..3
-    } else {
-      const letters = item.optionC ? ['A','B','C'] : ['A','B'];
-      responses[i] = letters[Math.floor(Math.random() * letters.length)]; // random 1..3 (or 1..2)
-    }
-  });
-  current = ITEMS.length - 1;
-  document.getElementById('view-intro').classList.add('hidden');
-  document.getElementById('view-results').classList.add('hidden');
-  document.getElementById('view-quiz').classList.remove('hidden');
-  buildRuler();
-  buildCircleDial();
-  renderItem();
-}
 
 document.addEventListener('keydown', function(e){
-  // Hidden shortcut: Alt+Shift+X randomly fills every answer and lands on the last question
-  // (does not jump to results).
-  if(e.altKey && e.shiftKey && e.key.toLowerCase() === 'x'){
-    e.preventDefault();
-    fillRandomAnswers();
-    return;
-  }
 
   // Hidden shortcut: Alt+Shift+R opens the file picker to resume from a saved file
   // (replaces the old visible "Resume from saved file" button).
