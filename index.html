@@ -412,6 +412,21 @@
   </div>
 </div>
 
+<div class="modal-overlay hidden" id="notice-modal" onclick="if(event.target===this) closeNoticeModal();">
+  <div class="modal-panel">
+    <h2>Before you begin</h2>
+    <ol class="intro-notes">
+      <li>If you believe there is nothing wrong about an action, or it is morally permissible, select right. Only select neutral if you are genuinely unsure between competing values.</li>
+      <li>Select based on what you think is right or wrong, which may or may not be what you would actually do.</li>
+      <li>Try to answer on your first instinct.</li>
+    </ol>
+    <p>Click a circle for each scenario; further from center means a stronger rating.</p>
+    <div style="display:flex; justify-content:flex-end; margin-top:22px;">
+      <button class="primary" onclick="closeNoticeModal()">Got it</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay hidden" id="theories-modal" onclick="if(event.target===this) closeTheoriesModal()">
   <div class="modal-panel">
     <div class="modal-close" onclick="closeTheoriesModal()">
@@ -497,16 +512,10 @@
       <p>This ethics quiz uses classic ethical dilemmas and thought experiments to reveal your preferred ethical frameworks!</p>
       <p>Every scenario isolates one variable at a time — intent versus outcome, luck versus choice, proximity versus distance, loyalty versus law, and more. Every answer is checked against nine competing ethical frameworks: <span style="color:var(--util)">utilitarianism</span>, <span style="color:var(--rule-fw)">rule utilitarianism</span>, <span style="color:var(--deon)">Kantian deontology</span>, <span style="color:var(--virt)">virtue ethics</span>, <span style="color:var(--libert)">libertarian rights theory</span>, <span style="color:var(--cont)">Rawlsian contractualism</span>, <span style="color:var(--ego)">ethical egoism</span>, <span style="color:var(--care)">care ethics</span>, and <span style="color:var(--desert)">desert theory</span>.</p>
       <p>At the end, you'll get a detailed report showing exactly which theories your instincts track most closely.</p>
-      <ol class="intro-notes">
-        <li>If you believe there is nothing wrong about an action, or it is morally permissible, select right. Only select neutral if you are genuinely unsure between competing values.</li>
-        <li>Select based on what you think is right or wrong, which may or may not be what you would actually do.</li>
-        <li>Try to answer on your first instinct.</li>
-      </ol>
-      <p>Click a circle for each scenario; further from center means a stronger rating.</p>
     </div>
     <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:12px;">
-      <button class="primary" onclick="startQuiz('full')">Begin test (9 frameworks, 15-20 min)</button>
-      <button class="primary" onclick="startQuiz('simple')">Begin simplified test (6 frameworks, 10 min)</button>
+      <button class="primary" onclick="beginWithNotice('full')">Begin test (9 frameworks, 15-20 min)</button>
+      <button class="primary" onclick="beginWithNotice('simple')">Begin simplified test (6 frameworks, 10 min)</button>
       <button class="ghost" onclick="openTheoriesModal()">View all frameworks</button>
     </div>
     <div id="resume-banner" class="hidden" style="margin-top:16px; padding:14px 16px; border:1px solid var(--brass-dim); border-radius:8px; background:var(--panel-raised); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
@@ -1220,6 +1229,21 @@ function toggleTheme(){
   isLight = !isLight;
   document.documentElement.setAttribute('data-theme', isLight ? 'light' : 'dark');
   document.getElementById('theme-btn').innerHTML = isLight ? MOON_ICON : SUN_ICON;
+}
+
+let pendingQuizMode = null;
+
+function beginWithNotice(mode){
+  pendingQuizMode = mode;
+  document.getElementById('notice-modal').classList.remove('hidden');
+}
+
+function closeNoticeModal(){
+  document.getElementById('notice-modal').classList.add('hidden');
+  if(pendingQuizMode){
+    startQuiz(pendingQuizMode);
+    pendingQuizMode = null;
+  }
 }
 
 function openTheoriesModal(){
