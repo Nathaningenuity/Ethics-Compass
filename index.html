@@ -407,7 +407,7 @@
   <div class="icon-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle light/dark mode">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>
   </div>
-  <div class="icon-btn" id="save-btn" onclick="saveProgress()" title="Save progress to a file">
+  <div class="icon-btn" id="save-btn" onclick="saveProgress()" title="Save progress">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
   </div>
 </div>
@@ -508,6 +508,13 @@
       <button class="primary" onclick="startQuiz('full')">Begin test (9 frameworks, 15-20 min)</button>
       <button class="primary" onclick="startQuiz('simple')">Begin simplified test (6 frameworks, 10 min)</button>
       <button class="ghost" onclick="openTheoriesModal()">View all frameworks</button>
+    </div>
+    <div id="resume-banner" class="hidden" style="margin-top:16px; padding:14px 16px; border:1px solid var(--brass-dim); border-radius:8px; background:var(--panel-raised); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <span id="resume-banner-text" style="font-size:13.5px; color:var(--text-dim);"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="primary" onclick="resumeAutosave()">Resume</button>
+        <button class="ghost" onclick="discardAutosave()">Start fresh</button>
+      </div>
     </div>
     <input type="file" id="resume-file-input" accept="application/json" class="hidden" onchange="handleResumeFile(event)">
   </div>
@@ -1202,6 +1209,7 @@ let bookmarks = new Array(ITEMS.length).fill(false);
 
 const SUN_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>';
 const MOON_ICON = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>';
+const CHECK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>';
 
 function toggleAutoNext(){
   autoNext = !autoNext;
@@ -1397,6 +1405,7 @@ function setDialValue(val){
   document.getElementById('next-btn').disabled = false;
   updateRuler();
   scheduleAutoNext();
+  autosaveProgress();
 }
 
 function renderItem(){
@@ -1533,14 +1542,83 @@ function jumpToItem(i){
   renderItem();
 }
 
+const AUTOSAVE_KEY = 'ethicsCompassAutosave';
+
+function autosaveProgress(){
+  try{
+    const data = {
+      mode: quizMode,
+      current,
+      responses,
+      savedAt: new Date().toISOString()
+    };
+    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
+  } catch(err){
+    // Storage unavailable (private browsing, quota, etc.) — fail silently, no impact on the quiz itself.
+  }
+}
+
+function clearAutosave(){
+  try{ localStorage.removeItem(AUTOSAVE_KEY); } catch(err){}
+}
+
+function checkForAutosave(){
+  let data;
+  try{
+    const raw = localStorage.getItem(AUTOSAVE_KEY);
+    if(!raw) return;
+    data = JSON.parse(raw);
+  } catch(err){ return; }
+  if(!data || !Array.isArray(data.responses)) return;
+
+  const answered = data.responses.filter(r => r !== null).length;
+  if(answered === 0) return;
+
+  const versionLabel = data.mode === 'simple' ? 'simplified (22-item)' : 'full (40-item)';
+  const when = new Date(data.savedAt);
+  const whenStr = isNaN(when) ? '' : ' — last saved ' + when.toLocaleString();
+
+  document.getElementById('resume-banner-text').textContent =
+    `You have an unfinished ${versionLabel} test (${answered}/${data.responses.length} answered)${whenStr}.`;
+  document.getElementById('resume-banner').classList.remove('hidden');
+}
+
+function resumeAutosave(){
+  let data;
+  try{
+    data = JSON.parse(localStorage.getItem(AUTOSAVE_KEY));
+  } catch(err){ return; }
+  if(!data) return;
+
+  quizMode = data.mode === 'simple' ? 'simple' : 'full';
+  ITEMS = (quizMode === 'simple') ? ITEMS_SIMPLE : ITEMS_FULL;
+  FRAMEWORKS = (quizMode === 'simple') ? FRAMEWORKS_SIMPLE : FRAMEWORKS_FULL;
+  responses = data.responses;
+  current = Math.min(Math.max(data.current || 0, 0), ITEMS.length - 1);
+  bookmarks = new Array(ITEMS.length).fill(false);
+
+  document.getElementById('view-intro').classList.add('hidden');
+  document.getElementById('view-quiz').classList.remove('hidden');
+  buildRuler();
+  buildCircleDial();
+  renderItem();
+}
+
+function discardAutosave(){
+  clearAutosave();
+  document.getElementById('resume-banner').classList.add('hidden');
+}
+
 function saveProgress(){
-  const data = { current, responses, savedAt: new Date().toISOString() };
-  const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
-  const link = document.createElement('a');
-  link.download = 'ethics-compass-progress.json';
-  link.href = URL.createObjectURL(blob);
-  link.click();
-  URL.revokeObjectURL(link.href);
+  autosaveProgress();
+  const btn = document.getElementById('save-btn');
+  const original = btn.innerHTML;
+  btn.innerHTML = CHECK_ICON;
+  btn.title = 'Saved!';
+  setTimeout(() => {
+    btn.innerHTML = original;
+    btn.title = 'Save progress';
+  }, 1400);
 }
 
 function handleResumeFile(event){
@@ -1584,6 +1662,7 @@ function chooseOption(choice){
   document.getElementById('next-btn').disabled = false;
   updateRuler();
   scheduleAutoNext();
+  autosaveProgress();
 }
 
 function nextItem(){
@@ -1970,6 +2049,7 @@ function showResults(){
   view.classList.remove('hidden');
   view.classList.add('fade-in');
   expandedFramework = null;
+  clearAutosave();
 
   const scores = computeScores();
   const labels = computeLabels(scores);
@@ -2141,6 +2221,7 @@ document.documentElement.setAttribute('data-theme', 'light');
 document.getElementById('theme-btn').innerHTML = MOON_ICON;
 
 buildIconRing();
+checkForAutosave();
 
 // Keyboard controls: 1-7 for the dial, arrows for back/next, A/B/C for choice items.
 
