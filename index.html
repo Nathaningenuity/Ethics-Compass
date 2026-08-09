@@ -1125,10 +1125,11 @@ const ITEMS_SIMPLE = [
    text:"A military strike deliberately bombs a civilian neighborhood to scare the enemy into surrender. It intentionally kills 40 civilians, but this is the only way to save 1000 more soldiers' lives by ending the war. Rate ordering this bombing.",
    predicted:{UTIL:3, RULE:-3, DEON:-3, VIRT:null, CONT:null, LIBERT:-3}},
 
-  {axis:'Justified theft vs. justice for its own sake', type:'spectrum',
-   name:"Robin Hood",
-   text:"An insurance company has spent years legally exploiting its policyholders, denying legitimate claims to profit off desperate families. Playing Robin Hood, you steal a large sum from the company and anonymously give it to the specific families it wronged. You face zero risk. Rate doing this.",
-   predicted:{UTIL:3, RULE:-3, DEON:-3, VIRT:2, CONT:3, LIBERT:-3}},
+  {axis:'Duty (promise-keeping) vs. outcome', type:'binary3',
+   name:"Broken Promise",
+   text:"You promised a dying friend you'd give his savings to his estranged son. Afterward you realize the money would do far more good donated to an effective charity, and no one would ever know you broke the promise. Do you:",
+   optionA:"Donate the money to charity, breaking the promise.", optionB:"Honor the promise and give it to the son.", optionC:"Not sure.",
+   predicted:{UTIL:'A', RULE:'B', DEON:'B', VIRT:'B', CONT:'B', LIBERT:'B'}},
 
   {axis:'Positive duty to aid vs. property rights/self-ownership', type:'trichotomy',
    name:"Effective Donation",
@@ -1136,7 +1137,13 @@ const ITEMS_SIMPLE = [
    optionA:"No obligation — spending it on yourself is a reasonable, blameless choice.", optionB:"Slight obligation — a real but not absolute expectation to donate.", optionC:"Strong obligation — failing to donate would itself be seriously wrong.",
    predicted:{UTIL:'C', RULE:'C', DEON:'B', VIRT:'C', CONT:'B', LIBERT:'A'}},
 
-  {axis:'Bodily autonomy vs. duty to sustain another\'s life', type:'trichotomy',
+  {axis:'Self-interest vs. collective welfare', type:'trichotomy',
+   name:"Whistleblowing",
+   text:"You discover your employer is committing accounting fraud that will eventually harm thousands of small investors. Reporting it will end your career and the careers of several innocent colleagues you are close with. Is reporting it:",
+   optionA:"No obligation — staying silent is a reasonable, blameless choice given the personal cost.", optionB:"Slight obligation — a real but not absolute expectation to report.", optionC:"Strong obligation — failing to report would itself be seriously wrong.",
+   predicted:{UTIL:'C', RULE:'C', DEON:'B', VIRT:'B', CONT:'B', LIBERT:'C'}},
+
+  {axis:"Bodily autonomy vs. duty to sustain another's life", type:'trichotomy',
    name:"The Violinist",
    text:"You wake up connected by tubes to a famous violinist with a fatal kidney ailment. Without your consent, medical professionals plugged you in overnight because you were the only compatible match — and unplugging will kill him. Staying connected for three months guarantees his full recovery and return to music career; you did nothing to cause his condition and never agreed to any of this. But his death would devastate his family and fans. Is staying connected for the full three months:",
    optionA:"No obligation — unplugging now is a reasonable, blameless choice.", optionB:"Slight obligation — a real but not absolute expectation to stay connected.", optionC:"Strong obligation — unplugging now would itself be seriously wrong.",
@@ -1163,16 +1170,17 @@ const ITEMS_SIMPLE = [
    text:"Someone is kind to everyone and honest, cares for people kindly, always. Every kind act helps its recipient; every honest statement is genuinely true. But the person does all of it purely for performance and personal pleasure — to be seen and admired as kind and honest. Rate this person's actions.",
    predicted:{UTIL:3, RULE:3, DEON:1, VIRT:-3, CONT:2, LIBERT:2}},
 
-  {axis:'Character habituation vs. net benefit', type:'spectrum',
-   name:"Sensational-but-Instructive Media",
-   text:"A TV series is graphic and sensational — designed to shock and titillate, but purely fictional. Viewers watch it for the visceral thrill of the graphic violence itself, seeing the simulated suffering. But viewers get real great pleasure, and watching it makes them meaningfully better at recognizing and avoiding real threats. No one is harmed. Rate watching it.",
-   predicted:{UTIL:2, RULE:2, DEON:1, VIRT:-3, CONT:null, LIBERT:3}},
-
   {axis:'Rule-following vs. individual judgment', type:'binary3',
    name:"Jury Nullification",
    text:"You're on a jury. The defendant is legally guilty under a strict-liability law you believe is unjust here — no real harm was done, and conviction would be excessive. Do you:",
    optionA:"Convict, following the law as written.", optionB:"Vote to acquit, following your own judgment of justice.", optionC:"Not sure.",
    predicted:{UTIL:'B', RULE:'A', DEON:'A', VIRT:'B', CONT:null, LIBERT:'B'}},
+
+  {axis:'Loyalty vs. truth-telling', type:'binary3',
+   name:"Journalist Question",
+   text:"Years ago your close friend committed a minor, non-violent crime that was never discovered and affects no one today. A journalist you don't know asks if you know anything relevant. Do you:",
+   optionA:"Say you know nothing.", optionB:"Tell the truth about what you know.", optionC:"Not sure.",
+   predicted:{UTIL:null, RULE:null, DEON:'B', VIRT:'A', CONT:'A', LIBERT:'A'}},
 
   {axis:'Utility vs. entitlement vs. need', type:'ordinal3', order:{A:1, B:3, C:-3},
    name:"Sen's Flute",
@@ -1185,11 +1193,6 @@ const ITEMS_SIMPLE = [
    text:"Two people start careers in the same field. One was born gifted and wealthy, and also works hard. The other was born with average ability, grew up poor, and also works hard. The first ends up with far better extracurriculars and grades. Scholarships can attract and reward talent, but also help those in need. There is exactly one scholarship position left. Rate giving it to the poorer but less-qualified applicant.",
    predicted:{UTIL:0, RULE:-2, DEON:null, VIRT:null, CONT:3, LIBERT:-3}},
 
-  {axis:'Talent as morally arbitrary vs. earned reward', type:'spectrum',
-   name:"The Natural Lottery Surgeon",
-   text:"Two surgeons have identical training and identical years of experience — the only difference is that one was born with steadier hands and sharper reflexes, entirely a matter of genetic luck, letting her work faster and better. A policy caps her earnings at the same level as her colleague, on the grounds that her advantage is unearned natural luck. Rate implementing this cap.",
-   predicted:{UTIL:-2, RULE:-2, DEON:-2, VIRT:-3, CONT:3, LIBERT:-3}},
-
   {axis:'Difference principle vs. pure aggregation', type:'spectrum',
    name:"The Sacrificed Minority",
    text:"A policy significantly raises average national wealth, but one small group (1% of the population), already worse-off, ends up even more worse off than today, while everyone else, including the poorest majority, gains significantly. Rate implementing it.",
@@ -1200,15 +1203,15 @@ const ITEMS_SIMPLE = [
    text:"Wilt Chamberlain is a gifted athlete. His fans voluntarily pay $10 each to watch him play, resulting in him becoming vastly richer than everyone else through millions of small, freely chosen transactions. Rate taxing him significantly and redistributing the wealth to poorer people.",
    predicted:{UTIL:2, RULE:2, DEON:null, VIRT:null, CONT:3, LIBERT:-3}},
 
-  {axis:'Basic liberties vs. material benefit', type:'spectrum',
+  {axis:"Basic liberties vs. material benefit", type:'spectrum',
    name:"The Liberty You'd Never Use",
    text:"A policy would suspend a specific civil liberty (freedom to change your profession or place of residence without state permission) for the population — but in exchange, guarantees dramatically better material outcomes for everyone. Nearly everyone would materially benefit, including, modestly, the poorest. Rate implementing this policy.",
    predicted:{UTIL:2, RULE:2, DEON:-2, VIRT:null, CONT:-3, LIBERT:-3}},
 
-  {axis:'Legitimate rights vs. vicious motive', type:'spectrum',
-   name:"The Vindictive Landlord",
-   text:"A wealthy man buys up every affordable house in a small town through entirely legal, voluntary purchases — not for profit, but purely to drive out a former rival he despises by letting the units sit empty, even as dozens of families struggle to find housing. Rate his doing this.",
-   predicted:{UTIL:-3, RULE:-2, DEON:-2, VIRT:-3, CONT:-3, LIBERT:3}},
+  {axis:'Soft paternalism', type:'spectrum',
+   name:"Mandatory Seatbelts",
+   text:"The law mandates seatbelts, enforcement is strict and consistent (fines), the safety benefit is large (reduced death / injury), and the personal liberty cost is small (a few seconds' inconvenience). Rate the law.",
+   predicted:{UTIL:3, RULE:3, DEON:-3, VIRT:3, CONT:3, LIBERT:-3}},
 ];
 
 let ITEMS = ITEMS_FULL;
