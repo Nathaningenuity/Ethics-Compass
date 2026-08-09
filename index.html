@@ -931,25 +931,35 @@ const ITEMS_FULL = [
    text:"The same ring of invisibility. An insurance company has spent years legally exploiting its policyholders, denying legitimate claims to profit off desperate families. Playing Robin Hood, you steal a large sum from the company and anonymously give it to the specific families it wronged. You face zero risk. Rate doing this.",
    predicted:{UTIL:3, RULE:-3, DEON:-3, VIRT:2, CONT:3, EGO:-3, CARE:3, LIBERT:-3, DESERT:3}},
 
-  {axis:'Universalizability vs. self-interest', type:'spectrum',
+  {axis:'Universalizability vs. self-interest', type:'trichotomy',
    name:'Small Tax Evasion',
-   text:"You could underreport a small amount of income on your taxes. The amount is too small to meaningfully affect any public service, and you're certain you won't be audited. Rate doing this.",
-   predicted:{UTIL:null, RULE:-3, DEON:-3, VIRT:-2, CONT:-2, EGO:3, CARE:null, LIBERT:3, DESERT:null}},
+   text:"You could underreport a small amount of income on your taxes. The amount is too small to meaningfully affect any public service, and you're certain you won't be audited. Is reporting your income honestly:",
+   optionA:"No obligation — underreporting is a reasonable, blameless choice.",
+   optionB:"Slight obligation — a real but not absolute expectation to report honestly.",
+   optionC:"Strong obligation — underreporting would itself be seriously wrong.",
+   predicted:{UTIL:null, RULE:'C', DEON:'C', VIRT:'C', CONT:'C', EGO:'A', CARE:null, LIBERT:'A', DESERT:null}},
 
-  {axis:'Relational dependency vs. self-interest/autonomy', type:'spectrum',
+  {axis:'Relational dependency vs. self-interest/autonomy', type:'trichotomy',
    name:'Aging Parent',
-   text:"Your elderly parent, who is not in danger but is lonely and increasingly dependent on you, asks you to move closer to them. Taking the job you actually want would mean moving much farther away and seeing them rarely. Rate taking the job anyway.",
-   predicted:{UTIL:null, RULE:null, DEON:null, VIRT:-3, CONT:null, EGO:3, CARE:-3, LIBERT:3, DESERT:null}},
+   text:"Your elderly parent, who is not in danger but is lonely and increasingly dependent on you, asks you to move closer to them. Taking the job you actually want would mean moving much farther away and seeing them rarely. Is staying with your parent:",
+   optionA:"No obligation — moving away is a reasonable, blameless choice.",
+   optionB:"Slight obligation — a real but not absolute expectation to stay closer.",
+   optionC:"Strong obligation — taking the distant job would itself be seriously wrong.",
+   predicted:{UTIL:null, RULE:null, DEON:'B', VIRT:'C', CONT:null, EGO:'A', CARE:'C', LIBERT:'A', DESERT:null}},
 
-  {axis:'Individual rationality vs. collective ruin', type:'spectrum',
+  {axis:'Individual rationality vs. collective ruin', type:'trichotomy',
    name:'Overfishing the Lake',
-   text:"Several families share a small lake for fishing. If everyone takes only what they need, fish stocks stay healthy for years. You could fish as much as you want — your own restraint alone won't save the lake if others are already overfishing regardless. Rate fishing as much as you can.",
-   predicted:{UTIL:-2, RULE:-3, DEON:-2, VIRT:-3, CONT:-3, EGO:2, CARE:-2, LIBERT:0, DESERT:null}},
+   text:"Several families share a small lake for fishing. If everyone takes only what they need, fish stocks stay healthy for years. You could fish as much as you want — your own restraint alone won't save the lake if others are already overfishing regardless. Is limiting your fishing:",
+   optionA:"No obligation — fishing as much as you want is a reasonable, blameless choice.",
+   optionB:"Slight obligation — a real but not absolute expectation to limit yourself.",
+   optionC:"Strong obligation — fishing without restraint would itself be seriously wrong.",
+   predicted:{UTIL:'C', RULE:'C', DEON:'C', VIRT:'C', CONT:'C', EGO:'A', CARE:'C', LIBERT:'A', DESERT:null}},
 
-  {axis:'Duty (promise-keeping) vs. outcome', type:'spectrum',
+  {axis:'Duty (promise-keeping) vs. outcome', type:'binary3',
    name:'Broken Promise',
-   text:"You promised a dying friend you'd give his savings to his estranged son. Afterward you realize the money would do far more good donated to an effective charity, and no one would ever know you broke the promise. Rate donating the money while breaking the promise.",
-   predicted:{UTIL:3, RULE:-2, DEON:-3, VIRT:-2, CONT:-2, EGO:null, CARE:-2, LIBERT:-2, DESERT:null}},
+   text:"You promised a dying friend you'd give his savings to his estranged son. Afterward you realize the money would do far more good donated to an effective charity, and no one would ever know you broke the promise. Do you:",
+   optionA:"Donate the money to charity, breaking the promise.", optionB:"Honor the promise and give it to the son.", optionC:"Not sure.",
+   predicted:{UTIL:'A', RULE:'B', DEON:'B', VIRT:'B', CONT:'B', EGO:null, CARE:'B', LIBERT:'B', DESERT:null}},
 
   {axis:'Positive duty to aid vs. property rights/self-ownership', type:'trichotomy',
    name:'Effective Donation',
@@ -1014,6 +1024,12 @@ const ITEMS_FULL = [
    optionA:"Convict, following the law as written.", optionB:"Vote to acquit, following your own judgment of justice.", optionC:"Not sure.",
    predicted:{UTIL:'B', RULE:'A', DEON:'A', VIRT:'B', CONT:null, EGO:null, CARE:null, LIBERT:'B', DESERT:'B'}},
 
+  {axis:'Compassion/necessity vs. property rights and rule of law', type:'binary3',
+   name:'Jean Valjean\'s Bread',
+   text:"Jean Valjean has now been convicted of theft nine times over six years, stealing loaves of bread to feed his starving sister's children. He says he's poor, desperate, and remorseful, like before. Do you:",
+   optionA:"Enforce the full legal penalty (years in prison).", optionB:"Show leniency in sentencing.", optionC:"Not sure.",
+   predicted:{UTIL:null, RULE:null, DEON:null, VIRT:'B', CONT:'B', EGO:null, CARE:'B', LIBERT:'A', DESERT:'A'}},
+
   {axis:'Fairness/merit vs. loyalty', type:'binary3',
    name:'Hiring Decision',
    text:"You're hiring for your team. Your close friend is a good, but not the best candidate. Do you:",
@@ -1072,11 +1088,6 @@ const ITEMS_FULL = [
    name:'Mandatory Seatbelts',
    text:"The law mandates seatbelts, enforcement is strict and consistent (fines), the safety benefit is large (reduced death / injury), and the personal liberty cost is small (a few seconds' inconvenience). Rate the law.",
    predicted:{UTIL:3, RULE:3, DEON:-3, VIRT:3, CONT:3, EGO:null, CARE:null, LIBERT:-3, DESERT:null}},
-
-  {axis:'Compassion/necessity vs. property rights and rule of law', type:'spectrum',
-   name:'Jean Valjean\'s Bread',
-   text:"Jean Valjean has now been convicted of theft nine times over six years, stealing loaves of bread to feed his starving sister's children. He says he's poor, desperate, and remorseful, like before. Rate enforcing the full legal penalty (years in prison) rather than showing leniency in sentence.",
-   predicted:{UTIL:null, RULE:null, DEON:null, VIRT:-3, CONT:-3, EGO:null, CARE:-3, LIBERT:3, DESERT:1}},
 ];
 
 // Shorter, 6-framework version of the instrument (22 items). Only these six frameworks get a
@@ -1905,6 +1916,7 @@ const BINARY3_SHORT_LABELS = {
   'Hiring Decision': {A:'Hire best candidate', B:'Hire friend', C:'Not sure'},
   'Journalist Question': {A:'Say you know nothing', B:'Tell the truth', C:'Not sure'},
   'Bribery for Jobs': {A:'Refuse the bribe', B:'Pay the bribe', C:'Not sure'},
+  "Jean Valjean's Bread": {A:'Enforce full penalty', B:'Show leniency', C:'Not sure'},
 };
 
 function shortAnswerLabel(item, r){
